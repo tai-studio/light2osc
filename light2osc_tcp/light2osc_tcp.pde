@@ -3,9 +3,19 @@ import oscP5.*;
 import processing.video.*;
 
 /**
- * Getting Started with Capture.
- * 
- * Reading and displaying an image from an attached Capture device. 
+ * light2osc_tcp 
+
+ * 2017, Till Bovermann
+ * http://tai-studio.org
+
+ * captures camera data, 
+ * transforms it into 8 simple values 
+ * (pairwise differential values of the regions),
+ * scrambles the regions, and 
+ * sends them out via OSC over a TCP connection, 
+ * directly to an scsynth process running on 
+ * localhost, port 57110.
+ * MIT License
  */
 
 
@@ -17,7 +27,7 @@ import processing.video.*;
 
  PImage region;
  int numRows = 1;
- int numCols = 4;
+ int numCols = 8;
  int numIndices;
  float[] brightnesses;
  float[] features;
@@ -68,25 +78,16 @@ void featureExtract() {
 }
 
 void setup() {
-  size(200, 200);
+  size(800, 200);
 
   randomSeed(seed);
-  camWidth = 80;
-  camHeight = 45;
   
-/// OSC
-  // oscP5 = new OscP5(this, 12000, OscP5.TCP);
-  // oscP5 = new OscP5(this, "127.0.0.1", OscP5.TCP);
-  // oscP5 = new OscP5(this, 57110, OscP5.TCP);
-  // oscP5 = new OscP5(this, "127.0.0.1", 8000, OscP5.TCP);
-
   oscP5 = new OscP5(this, "127.0.0.1", 57110, OscP5.TCP);
   oscP5.send("/notify", new Object[] {new Integer(1)});
 
+
   numIndices = numCols * numRows;
 
-  camRegionWidth = camWidth/numCols;
-  camRegionHeight = camHeight/numRows;
   dispRegionWidth = width/numCols;
   dispRegionHeight = height/numRows;
   noStroke();
@@ -98,30 +99,77 @@ void setup() {
     indices[i] = i;
   }
   scramble(indices);
-  // for (int i=0; i<numIndices; i++) {
-  //   println(indices[i]);
-  // }
+  
+  // debug
+  //for (int i=0; i<numIndices; i++) {
+  //  println(indices[i]);
+  //}
+
+  // camera names in order of importance
+  // aim for fastest fps with smallest amount of pixels 
+  // prefer external cams
+  String[] cameraNames = {
+    "name=HD Pro Webcam C920,size=240x135,fps=30",
+    "name=HD Pro Webcam C920 #2,size=240x135,fps=30",
+    "name=FaceTime HD Camera,size=80x45,fps=30"
+  };
   
   String[] cameras = Capture.list();
   if (cameras == null) {
-    println("Failed to retrieve the list of available cameras, will try the default...");
-    cam = new Capture(this, 80, 45);
-  } if (cameras.length == 0) {
+    println("Failed to retrieve the list of available cameras.");
+  } else if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
   } else {
-    // println("Available cameras:");
-    // printArray(cameras);
-
-    // The camera can be initialized directly using an element
-    // from the array returned by list():
-    //cam = new Capture(this, cameras[0]);
-    // Or, the settings can be defined based on the text in the list
-    cam = new Capture(this, camWidth, camHeight, "FaceTime HD Camera", camFps);
-    
-    // Start capturing the images from the camera
+    println("Available cameras:");
+    printArray(cameras);
+    println("--------------------------------");
+  }
+  
+  for (int i=0; i<cameraNames.length; i++) {
+    try {
+      print("trying ");
+      println(cameraNames[i]);
+      cam = new Capture(this, cameraNames[i]);
+      cam.start();
+      //String[] elems = "name=HD Pro Webcam C920,size=240x135,fps=30"
+      String[] elems = split(cameraNames[i], ',');
+      String[] dimensions = split(split(elems[1], '=')[1], 'x');
+      camWidth = int(dimensions[0]);
+      camHeight = int(dimensions[1]);
+      camFps = int(split(elems[2], '=')[1]);
+   
+      //// debug
+      //println(camWidth);
+      //println(camHeight);
+      //println(camFps);
+      
+      break;
+    } catch (Exception e) {
+      println("... not connected.");
+      
+      // clean up
+      cam.stop();
+      cam = null;
+    }
+  } // rof
+  
+  if(cam == null) { // no cam found
+    println("no known cam config connected, using default cam. For optimal performance, add preferred config string to 'cameraNames' array.");
+    // quick fix: use element from the array returned by list():
+    //cam = new Capture(this, cameras[24]);
+    //camWidth = 720;
+    //camHeight = 640;
+    //camFps = 30;
+    cam = new Capture(this, camWidth, camHeight);
+    camWidth = 720;
+    camHeight = 640;
+    camFps = 30;
     cam.start();
   }
+
+  camRegionWidth = camWidth/numCols;
+  camRegionHeight = camHeight/numRows;
 }
 
 void sendMsg() {
