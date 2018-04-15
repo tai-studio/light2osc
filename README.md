@@ -25,6 +25,21 @@ In short:
 + Install [Processing3](http://processing.org/)
 + Install libraries `OscP5` and `Video` from wihtin Processing (`Sketch>Import Library...>Add Library...`)
 
+#### Linux
+
+1. It seems to be necessary to install gstreamer
+
+    ```$ sudo apt-get install gstreamer0.10 libgstreamer-plugins-base0.10-dev```
+2. The default camera detection does not work. If you don't get any values when running the program, copy the desired camera config string from the printed list and paste it as the first element to the `cameraNames` array:
+
+    ```
+    String[] cameraNames = {
+      "name=/dev/video0,size=160x120,fps=30", // linux gstreamer device
+      "name=HD Pro Webcam C920,size=240x135,fps=30",
+      "name=HD Pro Webcam C920 #2,size=240x135,fps=30",
+      "name=FaceTime HD Camera,size=80x45,fps=30"
+    };
+    ```
 
 ### Usage
 
@@ -46,5 +61,5 @@ s.scope(8, 0, rate: \control);
 Use them e.g. via
 
 ```sclang
-{Splay.ar(SinOsc.ar(200 + (100 * In.kr(0, 4)))}
+{Splay.ar(SinOsc.ar(200 + (100 * In.kr(0, 4))))}
 ```
