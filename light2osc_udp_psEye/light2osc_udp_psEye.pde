@@ -25,7 +25,8 @@ import com.thomasdiewald.ps3eye.PS3Eye;
 
 // cameras
 int numCams = 4;
-int fps = 100; // see possible fps/resolution values below
+//int fps = 100; // see possible fps/resolution values below
+int fps = 50; // see possible fps/resolution values below
 boolean isVGA = false; // else QVGA
 PS3EyeP5[] cams;
 
@@ -36,8 +37,8 @@ NetAddress addr;
 
 
 PImage region;
-int numRows = 1;
-int numCols = 16;
+int numRows = 2;
+int numCols = 8;
 int numIndices;
 float[] brightnesses;
 float[] features;
@@ -134,7 +135,10 @@ void setup() {
       exit();
       return;
     }
-    cams[i].setAutogain(true);
+    //cams[i].setAutogain(true);
+    cams[i].setContrast(128);
+    cams[i].setGain(63);
+    cams[i].setExposure(200);
     cams[i].start();
     // if "false" Processing/PS3Eye frameRates are not "synchronized".
     // default value is "true".
@@ -170,7 +174,12 @@ void draw() {
           msg.add(features[j]/256 * 2);
           fill(features[j]/2 + 128);
 
-          rect((j % numCols) * dispRegionWidth, (dispRegionHeight * i) + ((j / numCols) * dispRegionHeight), dispRegionWidth, dispRegionHeight);
+          rect(
+            (j % numCols) * dispRegionWidth, 
+            (dispRegionHeight * i * numRows) + ((j / numCols) * dispRegionHeight), 
+            dispRegionWidth, 
+            dispRegionHeight
+          );
       };
   
       // send OSC Msg
