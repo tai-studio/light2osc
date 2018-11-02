@@ -46,6 +46,7 @@ For `light2osc_udp`  and `light2osc_tcp` it is necessary to install `gstreamer`
 For `light2osc_udp_psEye` it is necessary to 
 
 + install `libusb` (should be installed anyway).
++ add the `PS3.rules` `/etc/udev/rules.d` to make the device accessible for standard users 
 + remove the [driver module](https://lwn.net/Articles/308358/) (for the OmniVision OV534 USB bridge chip).
 After (re-)plugging your camera(s), remove the module with 
     ```
