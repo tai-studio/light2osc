@@ -9,12 +9,12 @@ import com.thomasdiewald.ps3eye.PS3Eye;
  * light2osc_udp 
  * PSEYE version
 
- * 2017, Till Bovermann
+ * 2017, 2018 Till Bovermann
  * http://tai-studio.org
 
  * captures camera data, 
- * transforms it into 8 simple values 
- * (pairwise differential values of the regions),
+ * transforms it into a few simple values 
+ * (pairwise differential values of regions),
  * scrambles the regions, and 
  * sends them out via OSC over a UDP connection, 
  * directly to an scsynth process running on 
@@ -37,8 +37,8 @@ NetAddress addr;
 
 
 PImage region;
-int numRows = 2;
-int numCols = 8;
+int numRows = 1;
+int numCols = 16;
 int numIndices;
 float[] brightnesses;
 float[] features;
@@ -90,7 +90,7 @@ void featureExtract() {
 }
 
 public void settings(){
-  size(800, 800);
+  size(600, 150);
 }
 
 void setup() {
@@ -135,16 +135,16 @@ void setup() {
       exit();
       return;
     }
-    //cams[i].setAutogain(true);
+    cams[i].setAutogain(true);
     cams[i].setContrast(128);
-    cams[i].setGain(63);
-    cams[i].setExposure(200);
+    //cams[i].setGain(63);
+    //cams[i].setExposure(100);
     cams[i].start();
     // if "false" Processing/PS3Eye frameRates are not "synchronized".
     // default value is "true".
     cams[i].waitAvailable(false); 
   };
-  frameRate(1000);
+  frameRate(500);
 
 
   camRegionWidth = camWidth/numCols;
