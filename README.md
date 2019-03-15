@@ -36,7 +36,7 @@ For `light2osc_udp`  and `light2osc_tcp`
 For `light2osc_udp_psEye`
 
 + Install `ps3eye` from wihtin Processing (`Sketch>Import Library...>Add Library...`)
-
++ Install `libusb` via [homebrew](https://brew.sh/)
 
 #### Linux
 
@@ -55,6 +55,8 @@ After (re-)plugging your camera(s), remove the module with
 
 ### Troubleshooting
 
+For `light2osc_udp`  and `light2osc_tcp`
+
 If the default camera selection does not work and you don't get any values when running the program, copy the desired camera config string from the printed list and paste it as the first element to the `cameraNames` array:
 
 ```
@@ -65,6 +67,11 @@ String[] cameraNames = {
   "name=FaceTime HD Camera,size=80x45,fps=30"
 };
 ```
+
+For `light2osc_udp_psEye`
+
+It appears seems that vendor and product IDs got mixed up on OSX 10.14, see [this issue](https://github.com/diwi/PS3Eye/issues/4) at the PS3Eye repository for details.
+
 
 ### Usage
 
