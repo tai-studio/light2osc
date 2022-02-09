@@ -9,7 +9,7 @@ import processing.video.*;
  * http://tai-studio.org
 
  * captures camera data, 
- * transforms it into 8 simple values 
+ * transforms it into N simple values 
  * (pairwise differential values of the regions),
  * scrambles the regions, and 
  * sends them out via OSC over a UDP connection, 
@@ -27,7 +27,7 @@ NetAddress addr;
 
 
 PImage region;
-int numRows = 1;
+int numRows = 4;
 int numCols = 8;
 int numIndices;
 float[] brightnesses;
@@ -110,10 +110,11 @@ void setup() {
   // aim for fastest fps with smallest amount of pixels 
   // prefer external cams
   String[] cameraNames = {
+    //"name=EpocCam,size=240x135,fps=30",
+    "name=FaceTime HD Camera,size=80x45,fps=30",
     "name=HD Pro Webcam C920,size=240x135,fps=30",
     "name=HD Pro Webcam C920 #2,size=240x135,fps=30",
     "name=HD Pro Webcam C920 #3,size=240x135,fps=30",
-    "name=FaceTime HD Camera,size=80x45,fps=30"
   };
   
   String[] cameras = Capture.list();

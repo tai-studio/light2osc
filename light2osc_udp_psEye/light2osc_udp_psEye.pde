@@ -24,9 +24,10 @@ import com.thomasdiewald.ps3eye.PS3Eye;
 
 
 // cameras
-int numCams = 4;
+int numCams = 1;
 //int fps = 100; // see possible fps/resolution values below
-int fps = 50; // see possible fps/resolution values below
+//int fps = 50; // see possible fps/resolution values below
+int fps = 25; // see possible fps/resolution values below
 boolean isVGA = false; // else QVGA
 PS3EyeP5[] cams;
 
@@ -37,8 +38,8 @@ NetAddress addr;
 
 
 PImage region;
-int numRows = 1;
-int numCols = 16;
+int numRows = 8;
+int numCols = 8;
 int numIndices;
 float[] brightnesses;
 float[] features;
@@ -86,11 +87,13 @@ void computeBrightness(PImage img) {
 void featureExtract() {
   for (int i = 0; i < numIndices; i++) {
       features[i] = brightnesses[indices[i]] - brightnesses[indices[(i+1) % numIndices]];
+//      features[i] = brightnesses[indices[i]];
+//      features[i] = brightnesses[i];
   }
 }
 
 public void settings(){
-  size(600, 150);
+  size(300, 150);
 }
 
 void setup() {
@@ -100,6 +103,7 @@ void setup() {
   // network
   oscP5 = new OscP5(this, 12000);
   addr = new NetAddress("127.0.0.1",57110);
+  //addr = new NetAddress("194.95.203.247",57110);
 
   // indexing and graphics
   numIndices = numCols * numRows;
