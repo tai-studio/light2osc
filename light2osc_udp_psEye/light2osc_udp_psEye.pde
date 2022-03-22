@@ -6,29 +6,55 @@ import com.thomasdiewald.ps3eye.PS3EyeP5;
 import com.thomasdiewald.ps3eye.PS3Eye;
 
 /**
- * light2osc_udp 
+ * light2osc_udp
  * PSEYE version
-
+ 
  * 2017, 2018 Till Bovermann
  * http://tai-studio.org
-
- * captures camera data, 
- * transforms it into a few simple values 
+ 
+ * captures camera data,
+ * transforms it into a few simple values
  * (pairwise differential values of regions),
- * scrambles the regions, and 
- * sends them out via OSC over a UDP connection, 
- * directly to an scsynth process running on 
+ * scrambles the regions, and
+ * sends them out via OSC over a UDP connection,
+ * directly to an scsynth process running on
  * localhost, port 57110.
  * MIT License
  */
 
 
 // cameras
-int numCams = 1;
+final int numCams = 1;
+final boolean isVGA = false; // else QVGA (which means less resolution but higher fps
+
+//int fps = 187; // see possible fps/resolution values below
+final int fps = 120; // see possible fps/resolution values below
 //int fps = 100; // see possible fps/resolution values below
 //int fps = 50; // see possible fps/resolution values below
-int fps = 25; // see possible fps/resolution values below
-boolean isVGA = false; // else QVGA
+//int fps = 25; // see possible fps/resolution values below
+
+// how many pixels to calculate?
+final int numRows = 8;
+final int numCols = 8;
+
+// how to process the data?
+boolean doScramble = false;
+boolean doDiff = true;
+
+// network / where to send data
+// scsynth
+final String OSC_IP = "127.0.0.1";
+final int OSC_PORT = 57110;
+
+// sclang
+//final String OSC_IP = "127.0.0.1";
+//final int OSC_PORT = 57120;
+
+// max/msp
+//final String OSC_IP = "127.0.0.1";
+//final int OSC_PORT = 7400;
+
+
 PS3EyeP5[] cams;
 
 
@@ -38,8 +64,6 @@ NetAddress addr;
 
 
 PImage region;
-int numRows = 8;
-int numCols = 8;
 int numIndices;
 float[] brightnesses;
 float[] features;
@@ -54,7 +78,7 @@ String camName;
 int camRegionWidth, camRegionHeight;
 int dispRegionWidth, dispRegionHeight;
 
-void scramble(int[] array){
+void scramble(int[] array) {
   int i, j, k, m, tmp;
   k = array.length;
   for (i=0, m=k; i<k-1; ++i, --m) {
@@ -68,7 +92,7 @@ void scramble(int[] array){
 }
 
 void computeBrightness(PImage img) {
-  float val = 0;  
+  float val = 0;
 
   // compute average brightness for regions
   for (int i = 0; i < numCols; i++) {
@@ -76,7 +100,7 @@ void computeBrightness(PImage img) {
       region = img.get(i * camRegionWidth, j * camRegionHeight, camRegionWidth, camRegionHeight);
       region.loadPixels();
       val = 0.0;
-      for (int k = 0; k < camRegionWidth * camRegionHeight; k++){
+      for (int k = 0; k < camRegionWidth * camRegionHeight; k++) {
         val += brightness(region.pixels[k]);
       }
       brightnesses[i + j*numCols] = val / (camRegionWidth * camRegionHeight);
@@ -85,15 +109,24 @@ void computeBrightness(PImage img) {
 }
 
 void featureExtract() {
-  for (int i = 0; i < numIndices; i++) {
-      features[i] = brightnesses[indices[i]] - brightnesses[indices[(i+1) % numIndices]];
-//      features[i] = brightnesses[indices[i]];
-//      features[i] = brightnesses[i];
+  if (doScramble) {
+    for (int i = 0; i < numIndices; i++) {
+      features[i] = brightnesses[indices[i]];
+    }
+  } else {
+    for (int i = 0; i < numIndices; i++) {
+      features[i] = brightnesses[i];
+    }
+  }
+  if (doDiff) {
+    for (int i = 0; i < numIndices; i++) {
+      features[i] = features[i] - features[(i+1) % numIndices];
+    }
   }
 }
 
-public void settings(){
-  size(300, 150);
+public void settings() {
+  size(150, 150);
 }
 
 void setup() {
@@ -102,7 +135,8 @@ void setup() {
 
   // network
   oscP5 = new OscP5(this, 12000);
-  addr = new NetAddress("127.0.0.1",57110);
+  addr = new NetAddress(OSC_IP, OSC_PORT);
+  //addr = new NetAddress("127.0.0.1",7400);
   //addr = new NetAddress("194.95.203.247",57110);
 
   // indexing and graphics
@@ -110,7 +144,7 @@ void setup() {
   dispRegionWidth = width/numCols;
   dispRegionHeight = height/numRows/numCams;
   noStroke();
-  
+
   brightnesses = new float[numIndices];
   features   = new float[numIndices];
   indices = new int[numIndices];
@@ -121,7 +155,7 @@ void setup() {
 
   // set up cameras
   cams = new PS3EyeP5[numCams];
- 
+
   for (int i = 0; i < numCams; ++i) {
     cams[i] = PS3EyeP5.getDevice(this, i);
     if (isVGA) {
@@ -134,7 +168,7 @@ void setup() {
       cams[i].init(fps, PS3Eye.Resolution.QVGA);
     }
 
-    if(cams[i] == null){
+    if (cams[i] == null) {
       System.out.println("Not enough PS3Eyes connected. Good Bye!");
       exit();
       return;
@@ -146,7 +180,7 @@ void setup() {
     cams[i].start();
     // if "false" Processing/PS3Eye frameRates are not "synchronized".
     // default value is "true".
-    cams[i].waitAvailable(false); 
+    cams[i].waitAvailable(false);
   };
   frameRate(500);
 
@@ -157,7 +191,7 @@ void setup() {
 
 void draw() {
   for (int i = 0; i < numCams; ++i) {
-    if(cams[i].isAvailable()){
+    if (cams[i].isAvailable()) {
 
       // get values
       computeBrightness(cams[i].getFrame());
@@ -169,64 +203,61 @@ void draw() {
       msg.add(numRows * numCols * i);
       // length
       msg.add(indices.length);
- 
-       // fill OSC Msg and draw
-      for (int j = 0; j < numCols*numRows; j++) {
-          int idx = indices[j];
-      //msg.add(pixelsVals[idx]/128 - 1);
-      //fill(pixelsVals[idx]);
-          msg.add(features[j]/256 * 2);
-          fill(features[j]/2 + 128);
 
-          rect(
-            (j % numCols) * dispRegionWidth, 
-            (dispRegionHeight * i * numRows) + ((j / numCols) * dispRegionHeight), 
-            dispRegionWidth, 
-            dispRegionHeight
+      // fill OSC Msg and draw
+      for (int j = 0; j < numCols*numRows; j++) {
+        msg.add(features[j]/256 * 1);
+        fill(features[j]/2 + 128);
+
+        rect(
+          (j % numCols) * dispRegionWidth,
+          (dispRegionHeight * i * numRows) + ((j / numCols) * dispRegionHeight),
+          dispRegionWidth,
+          dispRegionHeight
           );
       };
-  
+
       // send OSC Msg
-      oscP5.send(msg, addr); 
+      oscP5.send(msg, addr);
     };
   };
 }
 
 /*
 QVGA
-  2
-  3
-  5
-  7
-  10
-  12
-  15
-  17
-  30
-  37
-  40
-  50
-  60
-  75
-  90
-  100
-  125
-  137
-  150
-  187
-
-VGA
-  2
-  3
-  5
-  8
-  10
-  15
-  20
-  25
-  30
-  40
-  50
-  60
-  75
-*/
+ 2
+ 3
+ 5
+ 7
+ 10
+ 12
+ 15
+ 17
+ 30
+ 37
+ 40
+ 50
+ 60
+ 75
+ 90
+ 100
+ 125
+ 137
+ 150
+ 187
+ 
+ VGA
+ 2
+ 3
+ 5
+ 8
+ 10
+ 15
+ 20
+ 25
+ 30
+ 40
+ 50
+ 60
+ 75
+ */
