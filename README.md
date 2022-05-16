@@ -1,5 +1,5 @@
 ## light2osc
-2017, 2018 — Till Bovermann
+2017, 2018, 2022 — Till Bovermann
 
 Use a camera as a light sensor array.
 Configured for use with [SuperCollider](http://supercollider.github.io)'s' `scsynth`, writing directly to its first control buses.
